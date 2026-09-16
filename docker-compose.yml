@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: blooming-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: blooming
+      POSTGRES_PASSWORD: blooming
+      POSTGRES_DB: blooming
+    ports:
+      - "5433:5432"
+    volumes:
+      - blooming-db-data:/var/lib/postgresql/data
+
+volumes:
+  blooming-db-data:

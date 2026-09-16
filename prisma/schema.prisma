@@ -1,0 +1,463 @@
+// blooming. — trang bán hàng mỹ phẩm + admin
+// Prisma 6 · PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// ------------------------------------------------------------------
+/// Người dùng & phân quyền
+/// ------------------------------------------------------------------
+model Role {
+  id          String   @id @default(cuid())
+  key         String   @unique // super_admin, manager, staff_product, staff_order, staff_wh, cs, accountant, customer
+  name        String
+  permissions String[] // vd: product.write, price.publish, price.approve, cost.view, order.write ...
+  users       User[]
+  createdAt   DateTime @default(now())
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  phone        String?
+  passwordHash String
+  locale       String    @default("vi")
+  roleId       String
+  role         Role      @relation(fields: [roleId], references: [id])
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  addresses    Address[]
+  orders       Order[]
+  reviews      Review[]
+  wishlist     Wishlist[]
+  createdAt    DateTime  @default(now())
+}
+
+model Address {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName  String
+  phone     String
+  line1     String
+  ward      String
+  district  String
+  province  String
+  isDefault Boolean @default(false)
+}
+
+/// ------------------------------------------------------------------
+/// Danh mục sản phẩm
+/// ------------------------------------------------------------------
+model Brand {
+  id         String    @id @default(cuid())
+  slug       String    @unique
+  name       String
+  logoText   String?
+  isFeatured Boolean   @default(false)
+  products   Product[]
+}
+
+model Category {
+  id       String     @id @default(cuid())
+  slug     String     @unique
+  name     String
+  nameKo   String?
+  parentId String?
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryTree")
+  order    Int        @default(0)
+  products Product[]
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  HIDDEN
+}
+
+enum OrderType {
+  INSTOCK
+  PREORDER
+}
+
+model Product {
+  id           String         @id @default(cuid())
+  slug         String         @unique
+  name         String // tên hiển thị (tiếng Việt)
+  nameEn       String? // tên gốc tiếng Anh
+  nameKo       String?
+  description  String?
+  descriptionKo String?
+  ingredients  String?
+  howToUse     String?
+  origin       String?        @default("Hàn Quốc")
+  metaTitle       String?
+  metaDescription String?
+  status       ProductStatus  @default(ACTIVE)
+  orderType    OrderType      @default(INSTOCK)
+  isBestSeller Boolean        @default(false)
+  isNew        Boolean        @default(false)
+  ratingAvg    Float          @default(0)
+  ratingCount  Int            @default(0)
+  soldCount    Int            @default(0)
+
+  brandId    String
+  brand      Brand    @relation(fields: [brandId], references: [id])
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  images   ProductImage[]
+  variants ProductVariant[]
+  reviews  Review[]
+  wishedBy Wishlist[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String? // để trống -> dùng placeholder
+  tint      String  @default("#EFEBE3")
+  order     Int     @default(0)
+}
+
+model ProductVariant {
+  id          String    @id @default(cuid())
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku         String    @unique
+  name        String // vd "150ml", "Tone 21"
+  costKrw     Int       @default(0) // giá nhập tại Hàn (KRW / ₩)
+  costPrice   Int       @default(0) // giá vốn quy đổi (VND) = costKrw × tỉ giá
+  markupPct   Int       @default(25) // % lãi trên giá vốn -> giá bán (tùy chỉnh từng SP)
+  price       Int // giá bán niêm yết (VND) = costPrice × (1 + markupPct/100)
+  salePrice   Int? // giá khuyến mãi (VND)
+  saleStartsAt DateTime?
+  saleEndsAt   DateTime?
+
+  inventory      Inventory?
+  stockMovements StockMovement[]
+  priceRequests  PriceChangeRequest[]
+  priceHistory   PriceHistory[]
+  cartItems      CartItem[]
+  orderItems     OrderItem[]
+}
+
+model Inventory {
+  id                String         @id @default(cuid())
+  variantId         String         @unique
+  variant           ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  quantity          Int            @default(0)
+  lowStockThreshold Int            @default(10)
+}
+
+model StockMovement {
+  id        String   @id @default(cuid())
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  delta     Int
+  reason    String // import, adjust, sale, return
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+/// ------------------------------------------------------------------
+/// Đăng giá & duyệt giá
+/// ------------------------------------------------------------------
+enum PriceField {
+  PRICE
+  SALE_PRICE
+}
+
+enum PriceRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model PriceChangeRequest {
+  id          String             @id @default(cuid())
+  variantId   String
+  variant     ProductVariant     @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  field       PriceField
+  oldValue    Int?
+  newValue    Int?
+  status      PriceRequestStatus @default(PENDING)
+  requestedBy String
+  reviewedBy  String?
+  note        String?
+  createdAt   DateTime           @default(now())
+  reviewedAt  DateTime?
+}
+
+model PriceHistory {
+  id          String         @id @default(cuid())
+  variantId   String
+  variant     ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  field       PriceField
+  oldValue    Int?
+  newValue    Int?
+  changedBy   String
+  note        String?
+  createdAt   DateTime       @default(now())
+}
+
+/// ------------------------------------------------------------------
+/// Giỏ hàng
+/// ------------------------------------------------------------------
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String?
+  sessionId String?    @unique
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String         @id @default(cuid())
+  cartId    String
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  quantity  Int            @default(1)
+
+  @@unique([cartId, variantId])
+}
+
+model Wishlist {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+/// ------------------------------------------------------------------
+/// Khuyến mãi
+/// ------------------------------------------------------------------
+enum CouponType {
+  PERCENT
+  FIXED
+  FREESHIP
+}
+
+model Coupon {
+  id          String     @id @default(cuid())
+  code        String     @unique
+  type        CouponType
+  value       Int        @default(0)
+  minSubtotal Int?
+  maxUses     Int?
+  usedCount   Int        @default(0)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  active      Boolean    @default(true)
+}
+
+/// ------------------------------------------------------------------
+/// Đơn hàng · thanh toán · vận chuyển (có đặt cọc)
+/// ------------------------------------------------------------------
+enum ShippingCarrier {
+  GHN
+  GHTK
+}
+
+enum PaymentProvider {
+  VNPAY
+  MOMO
+  ZALOPAY
+  COD
+  BANK_TRANSFER
+}
+
+enum PaymentKind {
+  DEPOSIT
+  BALANCE
+  FULL
+  REFUND
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum OrderPaymentStatus {
+  UNPAID
+  DEPOSIT_PAID
+  PAID
+  REFUNDED
+}
+
+enum OrderStatus {
+  PENDING // Chờ xác nhận
+  CONFIRMED // Đã xác nhận
+  SOURCING // Đang gom hàng (preorder)
+  ARRIVED_VN // Hàng về kho VN (preorder)
+  AWAITING_BALANCE // Chờ thu số dư
+  PACKING // Đang đóng gói
+  HANDED_TO_CARRIER // Đã giao ĐVVC
+  DELIVERING // Đang giao
+  COMPLETED // Hoàn tất
+  CANCELLED // Huỷ
+  RETURNED // Trả hàng
+  REFUNDED // Hoàn tiền
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  code          String      @unique
+  userId        String?
+  user          User?       @relation(fields: [userId], references: [id])
+
+  customerName  String
+  customerPhone String
+  customerEmail String?
+  province      String
+  district      String
+  ward          String
+  addressLine   String
+  note          String?
+
+  shippingCarrier ShippingCarrier @default(GHN)
+  shippingFee     Int             @default(0)
+
+  subtotal   Int
+  discount   Int    @default(0)
+  couponCode String?
+  total      Int
+
+  orderType     OrderType         @default(INSTOCK)
+  depositRate   Int               @default(0) // 0 = trả toàn bộ; 30/50/70 = % cọc
+  depositAmount Int               @default(0)
+  balanceAmount Int               @default(0)
+  balanceDueAt  DateTime?
+  paymentStatus OrderPaymentStatus @default(UNPAID)
+
+  status    OrderStatus @default(PENDING)
+  items     OrderItem[]
+  payments  Payment[]
+  events    OrderStatusEvent[]
+  shipment  Shipment?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id          String          @id @default(cuid())
+  orderId     String
+  order       Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId   String?
+  variant     ProductVariant? @relation(fields: [variantId], references: [id])
+  productName String
+  variantName String
+  unitPrice   Int
+  quantity    Int
+  tint        String          @default("#EFEBE3")
+  imageUrl    String? // ảnh minh hoạ (từ SP hoặc admin dán thêm khi lên đơn)
+}
+
+model OrderStatusEvent {
+  id        String      @id @default(cuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    OrderStatus
+  note      String?
+  byUserId  String?
+  createdAt DateTime    @default(now())
+}
+
+model Payment {
+  id        String          @id @default(cuid())
+  orderId   String
+  order     Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  kind      PaymentKind
+  provider  PaymentProvider
+  amount    Int
+  status    PaymentStatus   @default(PENDING)
+  txnRef    String?
+  reportedAt DateTime? // khách bấm "tôi đã chuyển khoản"
+  paidAt    DateTime?
+  createdAt DateTime        @default(now())
+}
+
+enum ShipmentStatus {
+  PENDING
+  CREATED
+  PICKED_UP
+  IN_TRANSIT
+  DELIVERED
+  FAILED
+  RETURNED
+}
+
+model Shipment {
+  id           String          @id @default(cuid())
+  orderId      String          @unique
+  order        Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  carrier      ShippingCarrier
+  trackingCode String?
+  status       ShipmentStatus  @default(PENDING)
+  codAmount    Int             @default(0)
+  events       ShipmentEvent[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model ShipmentEvent {
+  id          String         @id @default(cuid())
+  shipmentId  String
+  shipment    Shipment       @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  status      ShipmentStatus
+  description String
+  at          DateTime       @default(now())
+}
+
+/// ------------------------------------------------------------------
+/// Đánh giá
+/// ------------------------------------------------------------------
+enum ReviewStatus {
+  PENDING
+  PUBLISHED
+  HIDDEN
+}
+
+model Review {
+  id           String       @id @default(cuid())
+  productId    String
+  product      Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId       String?
+  user         User?        @relation(fields: [userId], references: [id])
+  authorName   String
+  rating       Int
+  skinType     String?
+  body         String
+  hasPhoto     Boolean      @default(false)
+  status       ReviewStatus @default(PUBLISHED)
+  helpfulCount Int          @default(0)
+  createdAt    DateTime     @default(now())
+}
+
+/// ------------------------------------------------------------------
+/// Cấu hình cửa hàng (key/value)
+/// ------------------------------------------------------------------
+model Setting {
+  key   String @id
+  value Json
+}
