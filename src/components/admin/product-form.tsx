@@ -252,7 +252,7 @@ export function ProductForm({
 
         {/* Thông tin cơ bản */}
         <Card title={t("products.basicInfo")}>
-          <Label>{t("products.name")} (tiếng Việt)</Label>
+          <Label>{t("products.name")} (VI)</Label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -260,7 +260,7 @@ export function ProductForm({
             className="inp"
           />
           <div className="mt-3.5">
-            <Label>Tên tiếng Anh (gốc)</Label>
+            <Label>{t("products.nameEn")}</Label>
           </div>
           <input
             value={nameEn}
@@ -276,15 +276,15 @@ export function ProductForm({
                 onChange={(e) => setBrandId(e.target.value)}
                 className="inp"
               >
-                <option value="">— Chọn thương hiệu —</option>
-                <optgroup label={`Thương hiệu đang có (${brands.length})`}>
+                <option value="">{t("products.chooseBrand")}</option>
+                <optgroup label={t("products.brandsAvailable").replace("%s", String(brands.length))}>
                   {brands.map((b) => (
                     <option key={b.id} value={b.id}>
                       {b.name}
                     </option>
                   ))}
                 </optgroup>
-                <option value="__new__">+ Thêm thương hiệu mới…</option>
+                <option value="__new__">{t("products.addNewBrand")}</option>
               </select>
               {brandNew ? (
                 <input
@@ -294,10 +294,7 @@ export function ProductForm({
                   className="inp mt-2"
                 />
               ) : (
-                <p className="text-[11px] text-muted-2 mt-1.5">
-                  Gắn sản phẩm vào một thương hiệu trong danh sách — vd chọn{" "}
-                  <b>Torriden</b> thì SP hiện ở trang thương hiệu Torriden.
-                </p>
+                <p className="text-[11px] text-muted-2 mt-1.5">{t("products.brandHelp")}</p>
               )}
             </div>
             <div>
@@ -307,7 +304,7 @@ export function ProductForm({
                 onChange={(e) => setCategoryId(e.target.value)}
                 className="inp"
               >
-                <option value="">— Chọn —</option>
+                <option value="">{t("products.chooseCategory")}</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.parentId ? "› " : ""}
@@ -353,7 +350,7 @@ export function ProductForm({
               <input value={origin} onChange={(e) => setOrigin(e.target.value)} className="inp" />
             </div>
             <div>
-              <Label>Tên tiếng Hàn (tùy chọn)</Label>
+              <Label>{t("products.nameKo")}</Label>
               <input value={nameKo} onChange={(e) => setNameKo(e.target.value)} className="inp" />
             </div>
           </div>
@@ -387,12 +384,12 @@ export function ProductForm({
                       onClick={() => pickImage(i)}
                       className="absolute inset-0 grid place-items-center text-[10px] text-muted-2 hover:text-bloom"
                     >
-                      + tải ảnh
+                      {t("products.addImage")}
                     </button>
                   )}
                   {i === 0 && (
                     <span className="absolute top-1.5 left-1.5 bg-bloom text-white text-[9px] font-semibold px-1.5 py-0.5 rounded">
-                      Ảnh bìa
+                      {t("products.coverImage")}
                     </span>
                   )}
                   <button
@@ -410,7 +407,11 @@ export function ProductForm({
                     disabled={imgBusy}
                     className="text-[10.5px] text-bloom font-semibold disabled:opacity-60"
                   >
-                    {imgBusy ? "Đang tải…" : im.url ? "Đổi ảnh" : "Tải ảnh"}
+                    {imgBusy
+                      ? t("common.loading")
+                      : im.url
+                        ? t("products.changeImage")
+                        : t("products.uploadImage")}
                   </button>
                 </div>
                 <input
@@ -418,7 +419,7 @@ export function ProductForm({
                   onChange={(e) =>
                     setImages((L) => L.map((x, idx) => (idx === i ? { ...x, url: e.target.value } : x)))
                   }
-                  placeholder="hoặc dán URL"
+                  placeholder={t("products.orDropUrl")}
                   className="w-full h-7 border border-line rounded-md px-1.5 text-[10.5px] mt-1"
                 />
                 <div className="flex gap-1 mt-1">
@@ -445,13 +446,10 @@ export function ProductForm({
               className="w-[110px] h-[110px] border-[1.5px] border-dashed border-[#D0D0CA] rounded-[10px] flex flex-col items-center justify-center gap-1.5 text-muted-2 text-[11px] hover:border-bloom disabled:opacity-60"
             >
               <span className="text-lg leading-none">↑</span>
-              {imgBusy ? "Đang tải…" : "Tải ảnh lên"}
+              {imgBusy ? t("common.loading") : t("products.uploadImage")}
             </button>
           </div>
-          <p className="text-[11.5px] text-muted-2 mt-3">
-            Tải ảnh từ máy (mọi định dạng, kể cả ảnh iPhone HEIC) hoặc dán URL. Ảnh đầu tiên là ảnh bìa —
-            để trống thì web hiển thị ô màu placeholder.
-          </p>
+          <p className="text-[11.5px] text-muted-2 mt-3">{t("products.uploadHelp")}</p>
         </Card>
 
         {/* Biến thể & giá */}
@@ -460,7 +458,7 @@ export function ProductForm({
           right={
             !canApprove ? (
               <span className="text-[11px] text-warning bg-[#FBF3E6] px-2 py-0.5 rounded-full">
-                Giá mới cần Quản lý duyệt
+                {t("products.priceNeedsApproval")}
               </span>
             ) : undefined
           }
@@ -469,12 +467,12 @@ export function ProductForm({
             <table className="w-full border-collapse min-w-[560px]">
               <thead>
                 <tr className="text-[10px] uppercase tracking-wide text-muted-2 text-left">
-                  <th className="px-1.5 pb-2">Biến thể</th>
+                  <th className="px-1.5 pb-2">{t("products.variantColumn")}</th>
                   <th className="px-1.5 pb-2">SKU</th>
-                  {canCost && <th className="px-1.5 pb-2">Giá nhập ₩</th>}
-                  <th className="px-1.5 pb-2">Giá bán ₫</th>
-                  <th className="px-1.5 pb-2">Giá KM ₫</th>
-                  <th className="px-1.5 pb-2">Tồn</th>
+                  {canCost && <th className="px-1.5 pb-2">{t("products.costKrwCol")}</th>}
+                  <th className="px-1.5 pb-2">{t("products.sellPrice")} ₫</th>
+                  <th className="px-1.5 pb-2">{t("products.salePrice")} ₫</th>
+                  <th className="px-1.5 pb-2">{t("products.stock")}</th>
                   <th className="px-1.5 pb-2" />
                 </tr>
               </thead>
@@ -495,7 +493,7 @@ export function ProductForm({
                         onChange={(e) => setV(i, { sku: e.target.value })}
                         disabled={!!v.id}
                         className="cell disabled:bg-surface disabled:text-muted-2"
-                        placeholder="tự sinh"
+                        placeholder={t("products.autoSku")}
                       />
                     </td>
                     {canCost && (
@@ -569,19 +567,21 @@ export function ProductForm({
             }
             className="text-[12.5px] text-bloom font-semibold mt-3"
           >
-            + Thêm biến thể
+            {t("products.addVariant")}
           </button>
           {canCost && v0 && v0cost > 0 && (
             <p className="text-[11.5px] text-muted-2 mt-2">
-              Giá vốn biến thể đầu: {formatVND(v0cost)} (₩{v0.costKrw.toLocaleString("ko-KR")} ×{" "}
-              {krwRate}). Chỉ Quản lý / Kế toán / Super Admin thấy cột này.
+              {t("products.costFirstVariantNote")
+                .replace("%s", formatVND(v0cost))
+                .replace("%s", v0.costKrw.toLocaleString("ko-KR"))
+                .replace("%s", String(krwRate))}
             </p>
           )}
         </Card>
 
         {/* SEO */}
         <Card title="SEO">
-          <Label>Đường dẫn (slug)</Label>
+          <Label>{t("products.slugLabel")}</Label>
           <div className="inp !text-muted">
             /product/
             <input
@@ -610,13 +610,13 @@ export function ProductForm({
       {/* ---------------- CỘT PHẢI ---------------- */}
       <div className="flex flex-col gap-4.5">
         <div className="bg-white border border-line rounded-card p-5 sticky top-5">
-          <div className="text-sm font-bold mb-3">Đăng bán</div>
+          <div className="text-sm font-bold mb-3">{t("products.publish")}</div>
           <div className="flex flex-col gap-2">
             {(
               [
-                ["ACTIVE", "Đang bán"],
-                ["DRAFT", "Nháp / chờ hoàn thiện"],
-                ["HIDDEN", "Ẩn / hết hàng"],
+                ["ACTIVE", t("products.active")],
+                ["DRAFT", t("products.draft")],
+                ["HIDDEN", t("products.hidden")],
               ] as const
             ).map(([val, label]) => (
               <label key={val} className="flex items-center gap-2.5 text-[13px]">
@@ -639,7 +639,7 @@ export function ProductForm({
                 onChange={(e) => setIsBestSeller(e.target.checked)}
                 className="accent-bloom"
               />
-              Gắn nhãn <b>Bán chạy</b> (hiện ở navbar + trang chủ)
+              {t("products.tagBestSeller")}
             </label>
             <label className="flex items-center gap-2.5 text-[13px]">
               <input
@@ -648,7 +648,7 @@ export function ProductForm({
                 onChange={(e) => setIsNew(e.target.checked)}
                 className="accent-bloom"
               />
-              Gắn nhãn <b>Hàng mới</b>
+              {t("products.tagNew")}
             </label>
             <label className="flex items-center gap-2.5 text-[13px]">
               <input
@@ -657,7 +657,7 @@ export function ProductForm({
                 onChange={(e) => setOrderType(e.target.checked ? "PREORDER" : "INSTOCK")}
                 className="accent-bloom"
               />
-              Hàng <b>đặt trước</b> (bắt buộc đặt cọc khi mua)
+              {t("products.tagPreorder")}
             </label>
           </div>
 
@@ -665,14 +665,10 @@ export function ProductForm({
             <div className="bg-[#FEFBF4] border border-[#F0E4CB] rounded-[10px] p-3 mt-3.5 flex gap-2">
               <span className="text-warning shrink-0">⚠</span>
               <div className="text-[12px] leading-relaxed text-[#7A5B1E]">
-                Bạn có quyền <b>đăng giá</b> nhưng không có <b>duyệt giá</b>. Thông tin &amp; ảnh
-                lưu ngay;{" "}
-                {mode === "create" ? (
-                  <>sản phẩm mới sẽ ở trạng thái <b>Nháp</b> tới khi Quản lý duyệt &amp; mở bán.</>
-                ) : (
-                  <>giá bán / giá KM sửa ở đây sẽ tạo <b>yêu cầu chờ Quản lý duyệt</b>, giá đang
-                  chạy giữ nguyên.</>
-                )}
+                {t("products.publishNoApprove")}{" "}
+                {mode === "create"
+                  ? t("products.publishNoApproveCreate")
+                  : t("products.publishNoApproveEdit")}
               </div>
             </div>
           )}
@@ -683,26 +679,26 @@ export function ProductForm({
             onClick={() => submitAs("DRAFT")}
             className="w-full h-10 bg-white border border-line rounded-lg text-[13px] font-medium mt-2.5"
           >
-            Lưu nháp
+            {t("products.saveDraft")}
           </button>
         </div>
 
         {canCost && (
           <div className="bg-white border border-line rounded-card p-5">
             <div className="text-sm font-bold mb-3">
-              Giá &amp; lợi nhuận {v0?.name ? `(${v0.name})` : ""}
+              {t("products.priceProfit")} {v0?.name ? `(${v0.name})` : ""}
             </div>
             <div className="text-[13px] flex flex-col gap-2">
-              <Line k="Giá bán" v={v0?.price ? formatVND(v0.price) : "—"} />
+              <Line k={t("products.sellPrice")} v={v0?.price ? formatVND(v0.price) : "—"} />
               <Line
-                k="Giá KM"
+                k={t("products.salePrice")}
                 v={v0?.salePrice ? formatVND(v0.salePrice) : "—"}
                 accent="sale"
               />
-              <Line k="Giá vốn" v={v0cost ? formatVND(v0cost) : "—"} muted />
+              <Line k={t("products.cost")} v={v0cost ? formatVND(v0cost) : "—"} muted />
               <div className="border-t border-line mt-1 pt-2">
                 <Line
-                  k="Biên lợi nhuận"
+                  k={t("products.margin")}
                   v={margin == null ? "—" : `${margin}%`}
                   accent={margin != null && margin < 15 ? "sale" : "success"}
                 />
@@ -713,7 +709,7 @@ export function ProductForm({
 
         {mode === "edit" && priceHistory.length > 0 && (
           <div className="bg-white border border-line rounded-card p-5">
-            <div className="text-sm font-bold mb-3">Lịch sử đổi giá</div>
+            <div className="text-sm font-bold mb-3">{t("products.priceHistory")}</div>
             <div className="flex flex-col gap-3 text-[12px]">
               {priceHistory.map((h, i) => (
                 <div key={i}>
@@ -821,13 +817,14 @@ function StatusBadge({
   status: FormProduct["status"];
   canApprove: boolean;
 }) {
+  const t = useAdminT();
   const map = {
-    ACTIVE: { t: "Đang bán", c: "bg-[#E7F1FA] text-success" },
+    ACTIVE: { t: t("products.active"), c: "bg-[#E7F1FA] text-success" },
     DRAFT: {
-      t: canApprove ? "Nháp" : "Chờ Quản lý duyệt & mở bán",
+      t: canApprove ? t("products.draft") : t("products.pendingApprovalBadge"),
       c: "bg-[#FBF3E6] text-warning",
     },
-    HIDDEN: { t: "Đang ẩn", c: "bg-[#F0F0EC] text-muted" },
+    HIDDEN: { t: t("products.hidden"), c: "bg-[#F0F0EC] text-muted" },
   } as const;
   const s = map[status];
   return (
