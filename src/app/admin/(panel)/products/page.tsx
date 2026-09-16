@@ -5,6 +5,7 @@ import { guardAdmin } from "@/lib/admin-guard";
 import { ADMIN_ACCESS, PERMISSIONS, can } from "@/lib/rbac";
 import { getKrwRate } from "@/lib/settings";
 import { getLocale, pick } from "@/lib/i18n";
+import { adminT } from "@/lib/admin-i18n";
 import { ProductTable, type Row } from "@/components/admin/product-table";
 import { AdminProductFilters } from "@/components/admin/product-filters";
 
@@ -17,6 +18,7 @@ export default async function AdminProductsPage(props: {
   const canViewCost = can(actor.role.permissions, PERMISSIONS.COST_VIEW);
   const krwRate = canViewCost ? await getKrwRate() : 18;
   const locale = await getLocale();
+  const t = adminT(locale);
   const sp = await props.searchParams;
 
   const where: Prisma.ProductWhereInput = {
@@ -102,11 +104,14 @@ export default async function AdminProductsPage(props: {
     <div className="p-6 md:p-7">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight">Sản phẩm</h1>
+          <h1 className="text-[22px] font-bold tracking-tight">{t("products.title")}</h1>
           <p className="text-[13px] text-muted mt-1">
-            {count} sản phẩm · {hidden} đang ẩn · {oos} hết hàng
+            {t("products.summaryLine")
+              .replace("%s", String(count))
+              .replace("%s", String(hidden))
+              .replace("%s", String(oos))}
             {(sp.category || sp.brand || sp.q) &&
-              ` · đang xem ${products.length} sản phẩm`}
+              t("products.viewingCount").replace("%s", String(products.length))}
           </p>
         </div>
         <div className="flex gap-2.5">
@@ -114,7 +119,7 @@ export default async function AdminProductsPage(props: {
             href={`/api/admin/products/export${exportQuery}`}
             className="h-9 px-3.5 bg-white border border-line rounded-lg text-[13px] font-medium flex items-center"
           >
-            Xuất Excel
+            {t("common.exportExcel")}
           </a>
           <Link
             href={{
@@ -126,9 +131,12 @@ export default async function AdminProductsPage(props: {
             }}
             className="h-9 px-4 bg-bloom text-white hover:bg-bloom-ink rounded-lg text-[13px] font-semibold flex items-center"
           >
-            + Thêm sản phẩm
+            + {t("products.add")}
             {sp.brand
-              ? ` vào ${brands.find((b) => b.slug === sp.brand)?.name ?? sp.brand}`
+              ? t("products.addToBrand").replace(
+                  "%s",
+                  brands.find((b) => b.slug === sp.brand)?.name ?? sp.brand,
+                )
               : ""}
           </Link>
         </div>
@@ -141,17 +149,11 @@ export default async function AdminProductsPage(props: {
       />
 
       <p className="text-[12.5px] text-muted mb-3">
-        Bảng nhóm theo danh mục. Đổi <b>Danh mục</b> ngay trên dòng để phân loại
-        lại. Click ô Giá bán / Giá KM / Tồn
-        {canViewCost ? " / Giá nhập ₩" : ""} để sửa trực tiếp (Enter lưu, Esc huỷ).
-        NV Sản phẩm sửa giá → tạo yêu cầu chờ Quản lý duyệt.
-        {canViewCost && (
-          <>
-            {" "}
-            <b>Giá vốn ₫</b> = giá nhập ₩ × tỉ giá (chỉ Quản lý / Kế toán / Super
-            Admin thấy).
-          </>
+        {t("products.tableHelp").replace(
+          "%s",
+          canViewCost ? t("products.tableHelpCostSuffix") : "",
         )}
+        {canViewCost && t("products.tableHelpCostNote")}
       </p>
 
       {rows.length === 0 ? (

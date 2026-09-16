@@ -125,8 +125,8 @@ export function ProductTable({
           <table className="w-full border-collapse min-w-[900px]">
             <thead>
               <tr className="text-[10.5px] uppercase tracking-wide text-muted-2 text-left">
-                <th className="px-3 py-3 border-b border-[#F0F0EC]">Tên (VI)</th>
-                <th className="px-3 py-3 border-b border-[#F0F0EC]">Tên (EN)</th>
+                <th className="px-3 py-3 border-b border-[#F0F0EC]">{t("products.name")} (VI)</th>
+                <th className="px-3 py-3 border-b border-[#F0F0EC]">{t("products.name")} (EN)</th>
                 <th className="px-3 py-3 border-b border-[#F0F0EC]">{t("products.category")}</th>
                 <th className="px-3 py-3 border-b border-[#F0F0EC]">SKU</th>
                 {canViewCost && (

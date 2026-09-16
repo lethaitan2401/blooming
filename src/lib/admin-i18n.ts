@@ -219,6 +219,12 @@ const vi: Dict = {
   "products.publishNoApproveEdit": "giá bán / giá KM sửa ở đây sẽ tạo yêu cầu chờ Quản lý duyệt, giá đang chạy giữ nguyên.",
   "products.saveDraft": "Lưu nháp",
   "products.pendingApprovalBadge": "Chờ Quản lý duyệt & mở bán",
+  "products.summaryLine": "%s sản phẩm · %s đang ẩn · %s hết hàng",
+  "products.viewingCount": " · đang xem %s sản phẩm",
+  "products.addToBrand": " vào %s",
+  "products.tableHelp": "Bảng nhóm theo danh mục. Đổi Danh mục ngay trên dòng để phân loại lại. Click ô Giá bán / Giá KM / Tồn%s để sửa trực tiếp (Enter lưu, Esc huỷ). NV Sản phẩm sửa giá → tạo yêu cầu chờ Quản lý duyệt.",
+  "products.tableHelpCostSuffix": " / Giá nhập ₩",
+  "products.tableHelpCostNote": " Giá vốn ₫ = giá nhập ₩ × tỉ giá (chỉ Quản lý / Kế toán / Super Admin thấy).",
 
   // dashboard
   "dash.title": "Tổng quan",
@@ -562,6 +568,12 @@ const ko: Dict = {
   "products.publishNoApproveEdit": "여기서 수정한 판매가/할인가는 관리자 승인 대기 요청으로 생성되며, 현재 적용 중인 가격은 유지됩니다.",
   "products.saveDraft": "임시저장",
   "products.pendingApprovalBadge": "관리자 승인 대기 중",
+  "products.summaryLine": "상품 %s개 · 숨김 %s개 · 품절 %s개",
+  "products.viewingCount": " · %s개 상품 보는 중",
+  "products.addToBrand": " → %s",
+  "products.tableHelp": "카테고리별로 그룹화된 표입니다. 행에서 바로 카테고리를 변경할 수 있습니다. 판매가 / 할인가 / 재고%s 칸을 클릭하면 바로 수정됩니다 (Enter 저장, Esc 취소). 상품 담당자가 가격을 수정하면 관리자 승인 요청이 생성됩니다.",
+  "products.tableHelpCostSuffix": " / 매입가 ₩",
+  "products.tableHelpCostNote": " 원가 ₫ = 매입가 ₩ × 환율 (관리자/회계/슈퍼관리자만 볼 수 있음).",
 
   "dash.title": "대시보드",
   "dash.updatedAt": "업데이트",
